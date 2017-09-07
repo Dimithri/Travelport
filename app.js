@@ -24,10 +24,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //direct to static home page for basic search operations
 app.get('/',function(req,res){
-     res.sendFile(path.join(__dirname+'/index.html'));
+     res.sendFile(path.join(__dirname+'/html/index.html'));
 });
-
-
 
 app.use('/search',flight_search);
 app.use('/airports', airports);

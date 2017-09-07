@@ -1,0 +1,172 @@
+<html>
+<!--authored by dimithriavindra@gmail.com
+This app is a sample app for travelport locomote recruitment process
+-->
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+
+</head>
+
+<div class="container" style="background-color:lavenderblush;">
+    <h1>Travelport Flight Search</h1>
+</div>
+
+<div class="container" id="search_container">
+    <div class="row">
+        <div class="col-sm-6" style="background-color:lavender;">
+            <h3>Search Departures</h3>
+            <div class='container' id='away_search_pane'>
+                Date:<br>
+                <input type="date" name="date" id="away_date"><br>
+                From:<br>
+                <input name="from" id="away_from"><br>
+                To:<br>
+                <input name="to" id="away_to"><br>
+
+                <br>
+                <input type="button" class='btn btn-default' id="searchAway" value="Search"
+                       onclick="search_flights('away', 'searchAway')"/>
+            </div>
+        </div>
+
+
+        <div class="col-sm-6" style="background-color:lavender;">
+            <h3>Search Return Flights</h3>
+
+            <div id='return_search_pane'>
+                Date:<br>
+                <input type="date" name="date" id="return_date"><br>
+                From:<br>
+                <input name="from" id="return_from"><br>
+                To:<br>
+                <input name="to" id="return_to"><br>
+
+                <br>
+                <input type="button" class="btn  btn-default" id="searchReturn"
+                       onclick="search_flights('return', 'searchreturn')" value="Search"/>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+
+        <div class="col-sm-6" id='away_result'></div>
+        <div class="col-sm-6" id='return_result'></div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var search_flights = function (pane, btnid) {
+
+        var from = $('#' + pane + '_from').val();
+        var to = $('#' + pane + '_to').val();
+        var date = $('#' + pane + '_date').val();
+        var disturl = 'http://localhost:3000/search'; // this needs to be
+        var $btn = $('#' + btnid);
+        $btn.button('loading');
+
+        if (from == "") {
+            alert("Starting Airport Cannot Be Empty !");
+            $btn.button('reset');
+            return;
+        }
+
+        if (to == "") {
+            alert("Destination Airport Cannot Be Empty !");
+            $btn.button('reset');
+            return;
+        }
+
+        if (date == "") {
+            alert("Travel Date Cannot Be Empty !");
+            $btn.button('reset');
+            return;
+        }
+
+        $.getJSON(disturl, {
+            date: date,
+            from: from,
+            to: to
+        }, function (result) {
+            appendResults(result, pane + '_result');
+            $btn.button('reset');
+        }).fail(function (error) {
+            console.log(error);
+            $btn.button('reset');
+            handle_error(pane + '_result');
+        });
+
+
+    };
+
+    function handle_error(pane) {
+        var error_pane = $('#' + pane);
+        error_pane.html('Something went wrong! Please Try again. Check your inputs!');
+
+    }
+
+
+    function appendResults(flightSearchResults, div) {
+        var searchResultDiv = $('#' + div);
+        searchResultDiv.html("");
+        var count = 0;
+        for (var i = 0; i < flightSearchResults.length; i++) {
+            var result = flightSearchResults[i];
+            for (var j = 0; j < result.length; j++) {
+                count++;
+                // writing a basic output of search results. To improve the results, process datetime objects
+                // and structure the div containers.
+                var innerDiv = $("<a/>", {
+                    id: div + '_res_' + count,
+                    'data-toggle': 'collapse',
+                    href: '#' + div + '_res_panel_' + count
+                });
+                var resPanel = $("<div/>", {id: div + '_res_panel_' + count, 'hidden': true, 'class': 'collapse'});
+                innerDiv.html("<br/>Flight: <b>" + result[j].airline.code + " " + result[j].flightNum + " </b>     Price:$" + result[j].price + "<br/>");
+                resPanel.html("  Airline : " + result[j].airline.name + "<br />");
+                resPanel.append("  Start Airport : " + result[j].start.airportName + "<br/>");
+                resPanel.append("  Start City : " + result[j].start.cityName + "<br />");
+                var startdate = new Date(result[j].start.dateTime);
+                resPanel.append("  Departing Time : " + startdate.toLocaleTimeString(navigator.language, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }) + "<br />");
+                resPanel.append("  Finish Airport : " + result[j].finish.airportName + "<br />");
+                resPanel.append("  Finish City : " + result[j].finish.cityName + "<br />");
+                var enddate = new Date(result[j].finish.dateTime);
+                resPanel.append("  Arriving Time : " + enddate.toLocaleTimeString(navigator.language, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }) + "<br />");
+
+                searchResultDiv.append(innerDiv);
+                searchResultDiv.append(resPanel);
+            }
+        }
+    }
+
+</script>
+
+</html>
