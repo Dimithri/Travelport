@@ -59,7 +59,7 @@ function execute_search(airlineResults, fromResults, toResults, date, response) 
 
 function findAllFlights(from, to, date, res) {
 
-    airlines_options = {
+    airlinesOptions = {
         uri: airlinesURI,
         headers: {
             'User-Agent': 'Request-Promise'
@@ -67,35 +67,20 @@ function findAllFlights(from, to, date, res) {
         json: true
     };
 
-    from_options = {
-        uri: airportsURI,
-        qs: {q: from},
-        headers: {
-            'User-Agent': 'Request-Promise'
-        },
-        json: true
-    };
-
-    to_options = {
-        uri: airportsURI,
-        qs: {q: to},
-        headers: {
-            'User-Agent': 'Request-Promise'
-        },
-        json: true
-    };
+    fromOptions = getAirportCodeOptions(from);
+    toOptions = getAirportCodeOptions(to);
 
     var paramPromises = []; // The promises used to populate the search parameters for flight_search
-    paramPromises.push(request(airlines_options));
-    paramPromises.push(request(from_options));
-    paramPromises.push(request(to_options));
+    paramPromises.push(request(airlinesOptions));
+    paramPromises.push(request(fromOptions));
+    paramPromises.push(request(toOptions));
 
     q.all(paramPromises).then(function (result) {
         airlineResults = result[0];
         fromResults = result[1];
         toResults = result[2];
 
-        console.log('Parameters ready');
+        console.debug('Parameters ready');
 
         execute_search(airlineResults, fromResults, toResults, date, res);
 
@@ -106,6 +91,17 @@ function findAllFlights(from, to, date, res) {
         }
     );
 
+}
+
+function getAirportCodeOptions(queryString){
+    return {
+        uri: airportsURI,
+        qs: {q: queryString},
+        headers: {
+            'User-Agent': 'Request-Promise'
+        },
+        json: true
+    };
 }
 
 module.exports = router;
